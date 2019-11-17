@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "wilmes"
+version = "0.1.0"
+description = ""
+authors = ["Tuomas Suutari <tuomas@nepnep.net>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+mechanicalsoup = "^0.12.0"
+python-dateutil = "^2.8"
+pytz = "^2019.3"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.740.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
