@@ -5,6 +5,9 @@ description = ""
 authors = ["Tuomas Suutari <tuomas@nepnep.net>"]
 license = "MIT"
 
+[tool.poetry.scripts]
+wilmes = "wilmes.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.6"
 mechanicalsoup = ">=0.8"
