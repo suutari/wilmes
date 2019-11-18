@@ -1,10 +1,10 @@
 import re
 import urllib.parse
 from datetime import datetime, tzinfo
-from typing import Dict, Iterable, List
+from types import TracebackType
+from typing import Dict, Iterable, List, Optional, Type
 
 import mechanicalsoup
-from bs4 import BeautifulSoup
 from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
@@ -18,21 +18,30 @@ MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
 class Client:
     def __init__(self, url: str, username: str, password: str) -> None:
         self.url = url
-        self.browser = mechanicalsoup.StatefulBrowser()
-        self.front_page = self._login(username, password)
-        links = self.front_page.find_all('a', href=True)
-        self.pupils = self._parse_pupils(links)
-        self.new_message_counts = self._parse_new_message_counts(links)
+        self.username = username
+        self.password = password
 
-    def _login(self, username: str, password: str) -> BeautifulSoup:
+    def connect(self) -> 'Connection':
+        return Connection.open(self.url, self.username, self.password)
+
+
+class Connection:
+    @classmethod
+    def open(
+            cls,
+            url: str,
+            username: str,
+            password: str,
+    ) -> 'Connection':
         """
         Log in to the site.
         """
-        self.browser.open(f'{self.url}/login')
-        self.browser.select_form('.login-form')
-        self.browser['Login'] = username
-        self.browser['Password'] = password
-        response = self.browser.submit_selected()
+        browser = mechanicalsoup.StatefulBrowser()
+        browser.open(f'{url}/login')
+        browser.select_form('.login-form')
+        browser['Login'] = username
+        browser['Password'] = password
+        response = browser.submit_selected()
         response.raise_for_status()
         parsed_url = urllib.parse.urlparse(response.url)
         query = urllib.parse.parse_qs(parsed_url.query, keep_blank_values=True)
@@ -40,7 +49,33 @@ class Client:
             raise Exception('Login failed')
         if parsed_url.query:
             raise Exception('Unexpected result')
-        return self.browser.get_current_page()
+        return cls(url, browser)
+
+    def close(self) -> None:
+        self.logout()
+
+    def __enter__(self) -> 'Connection':
+        return self
+
+    def __exit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[Exception],
+            traceback: Optional[TracebackType],
+    ) -> None:
+        self.close()
+
+    def __init__(
+            self,
+            url: str,
+            browser: mechanicalsoup.StatefulBrowser,
+    ) -> None:
+        self.url = url
+        self.browser = browser
+        self.front_page = browser.get_current_page()
+        links = self.front_page.find_all('a', href=True)
+        self.pupils = self._parse_pupils(links)
+        self.new_message_counts = self._parse_new_message_counts(links)
 
     def _parse_pupils(self, links: Iterable[Tag]) -> Dict[PupilId, Pupil]:
         """

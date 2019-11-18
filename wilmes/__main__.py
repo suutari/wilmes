@@ -9,29 +9,27 @@ from ._client import Client
 def main(argv: Sequence[str] = sys.argv) -> None:
     args = parse_args(argv)
     client = get_client(args)
-    try:
+    with client.connect() as connection:
         if args.check_only:
-            for pupil in client.pupils.values():
-                count = client.new_message_counts.get(pupil.id, 0)
+            for pupil in connection.pupils.values():
+                count = connection.new_message_counts.get(pupil.id, 0)
                 print(f'{pupil.name}: {count}')
         elif args.list:
-            for (n, pupil) in enumerate(client.pupils.values()):
+            for (n, pupil) in enumerate(connection.pupils.values()):
                 if n != 0:
                     print('')
                 print(f'Pupil: {pupil.name}')
-                message_infos = client.fetch_message_list(pupil.id)
+                message_infos = connection.fetch_message_list(pupil.id)
                 for message_info in message_infos:
                     print(message_info)
         else:
-            new_messages = client.get_new_messages()
+            new_messages = connection.get_new_messages()
             for (n, pupil) in enumerate(new_messages.keys()):
                 print(f'Pupil: {pupil.name}')
                 print('')
                 for message in new_messages[pupil]:
                     print(message)
                     print('')
-    finally:
-        client.logout()
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
