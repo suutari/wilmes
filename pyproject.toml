@@ -7,9 +7,9 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-mechanicalsoup = "^0.12.0"
-python-dateutil = "^2.8"
-pytz = "^2019.3"
+mechanicalsoup = ">=0.8"
+python-dateutil = "^2.0"
+pytz = "*"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.740.0"
