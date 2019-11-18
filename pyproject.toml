@@ -5,6 +5,8 @@ description = "Message fetching library for a Finnish school site"
 readme = "README.rst"
 authors = ["Tuomas Suutari <tuomas@nepnep.net>"]
 license = "MIT"
+repository = "https://github.com/suutari/wilmes"
+homepage = "https://github.com/suutari/wilmes"
 
 [tool.poetry.scripts]
 wilmes = "wilmes.__main__:main"
