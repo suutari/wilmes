@@ -12,12 +12,17 @@ python-dateutil = "^2.0"
 pytz = "*"
 
 [tool.poetry.dev-dependencies]
+# types
 mypy = "^0.740.0"
+
+# style
 flake8 = "^3.7"
 flake8-isort = "^2.7"
 pep8-naming = "^0.9.1"
-jedi = "^0.15.1"
+
+# util
 ipython = "^7.9"
+jedi = "^0.15.1"
 
 [build-system]
 requires = ["poetry>=0.12"]
