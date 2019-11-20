@@ -1,8 +1,8 @@
 import re
 import urllib.parse
-from datetime import datetime, tzinfo
+from datetime import datetime
 from types import TracebackType
-from typing import Dict, Iterable, List, Optional, Type
+from typing import Dict, Iterable, List, Optional, Protocol, Type
 
 import mechanicalsoup
 from bs4.element import Tag
@@ -166,6 +166,12 @@ class Connection:
         self.browser = mechanicalsoup.StatefulBrowser()
 
 
-def _parse_timestamp(string: str, tz: tzinfo = TZ) -> datetime:
+class _PytzTimezone(Protocol):
+    def localize(self, dt: datetime) -> datetime: ...
+
+
+def _parse_timestamp(string: str, tz: _PytzTimezone = TZ) -> datetime:
     dt = parse_datetime(string)
-    return dt.astimezone(tz)
+    if dt.tzinfo:
+        return dt
+    return tz.localize(dt)
