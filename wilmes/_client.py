@@ -113,7 +113,7 @@ class Connection:
             message_infos = self.fetch_message_list(pupil_id)
             for message_info in message_infos:
                 if message_info.is_unread:
-                    body = self.fetch_message(pupil_id, message_info.id)
+                    body = self.fetch_message_body(pupil_id, message_info.id)
                     message = Message.from_info_and_body(message_info, body)
                     result[pupil].append(message)
         return result
@@ -139,7 +139,11 @@ class Connection:
             for x in response.json()['Messages']
         ]
 
-    def fetch_message(self, pupil_id: PupilId, message_id: MessageId) -> str:
+    def fetch_message_body(
+            self,
+            pupil_id: PupilId,
+            message_id: MessageId,
+    ) -> str:
         """
         Get message contents as HTML string.
         """
