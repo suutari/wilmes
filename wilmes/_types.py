@@ -17,6 +17,7 @@ class Pupil(NamedTuple):
 @dataclass
 class MessageInfo:
     id: MessageId
+    pupil_id: PupilId
     subject: str
     timestamp: datetime
     folder: str

@@ -129,6 +129,7 @@ class Connection:
         return [
             MessageInfo(
                 id=MessageId(x['Id']),
+                pupil_id=pupil_id,
                 subject=x['Subject'],
                 timestamp=_parse_timestamp(x['TimeStamp']),
                 folder=x['Folder'],
