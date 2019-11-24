@@ -17,6 +17,7 @@ class Pupil(NamedTuple):
 @dataclass
 class MessageInfo:
     id: MessageId
+    origin: str  # URL of the system this message is from
     pupil_id: PupilId
     subject: str
     timestamp: datetime

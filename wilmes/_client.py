@@ -113,6 +113,10 @@ class Connection:
             message_infos = self.fetch_message_list(pupil_id)
             for message_info in message_infos:
                 if message_info.is_unread:
+                    if message_info.origin != self.url:
+                        raise ValueError(
+                            f'Invalid message origin: '
+                            f'{message_info.origin} (expected {self.url})')
                     body = self.fetch_message_body(pupil_id, message_info.id)
                     message = Message.from_info_and_body(message_info, body)
                     result[pupil].append(message)
@@ -129,6 +133,7 @@ class Connection:
         return [
             MessageInfo(
                 id=MessageId(x['Id']),
+                origin=self.url,
                 pupil_id=pupil_id,
                 subject=x['Subject'],
                 timestamp=_parse_timestamp(x['TimeStamp']),
