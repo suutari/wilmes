@@ -109,17 +109,9 @@ class Connection:
         result: Dict[Pupil, List[Message]] = {}
         for (pupil_id, count) in self.new_message_counts.items():
             pupil = self.pupils[pupil_id]
-            result[pupil] = []
             message_infos = self.fetch_message_list(pupil_id)
-            for message_info in message_infos:
-                if message_info.is_unread:
-                    if message_info.origin != self.url:
-                        raise ValueError(
-                            f'Invalid message origin: '
-                            f'{message_info.origin} (expected {self.url})')
-                    body = self.fetch_message_body(pupil_id, message_info.id)
-                    message = Message.from_info_and_body(message_info, body)
-                    result[pupil].append(message)
+            unreads = (x for x in message_infos if x.is_unread)
+            result[pupil] = [self.fetch_message(x) for x in unreads]
         return result
 
     def fetch_message_list(self, pupil_id: PupilId) -> List[MessageInfo]:
@@ -144,6 +136,15 @@ class Connection:
             )
             for x in response.json()['Messages']
         ]
+
+    def fetch_message(self, message_info: MessageInfo) -> Message:
+        if message_info.origin != self.url:
+            raise ValueError(
+                f'Invalid message origin: '
+                f'{message_info.origin} (expected {self.url})')
+        body = self.fetch_message_body(message_info.pupil_id, message_info.id)
+        message = Message.from_info_and_body(message_info, body)
+        return message
 
     def fetch_message_body(
             self,
