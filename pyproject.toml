@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wilmes"
-version = "0.3.1"
+version = "0.4.0"
 description = "Message fetching library for a Finnish school site"
 readme = "README.rst"
 authors = ["Tuomas Suutari <tuomas@nepnep.net>"]
