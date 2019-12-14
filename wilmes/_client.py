@@ -10,6 +10,7 @@ import requests
 from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
+from ._bs_utils import delete_subelements, stringify_contents
 from ._settings import TZ
 from ._types import Message, MessageId, MessageInfo, Pupil, PupilId
 
@@ -160,13 +161,9 @@ class Connection:
         page = self._browse(url)
         body = page.find('body')
         if not body:
-            return ''
-        for selector in ['h1', 'table', '.printout-footer']:
-            tag_to_clean = body.select_one(selector)
-            if tag_to_clean:
-                tag_to_clean.replace_with('')
-        strings = (str(x) for x in body)
-        return '\n'.join(x for x in strings if x.strip())
+            raise Exception(f'Cannot parse message: {url}')
+        delete_subelements(body, ['h1', 'table', '.printout-footer'])
+        return stringify_contents(body)
 
     def logout(self) -> None:
         """
