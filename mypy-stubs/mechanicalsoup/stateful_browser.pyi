@@ -1,3 +1,5 @@
+from typing import Optional
+
 import bs4
 
 from .browser import Browser, _Response
@@ -19,6 +21,8 @@ class StatefulBrowser(Browser):
             url: str,
             #*args, **kwargs,
     ) -> _Response: ...
+
+    def get_url(self) -> Optional[str]: ...
 
     def select_form(
             self,
