@@ -38,7 +38,7 @@ class Connection:
         """
         Log in to the site.
         """
-        browser = mechanicalsoup.StatefulBrowser()
+        browser = mechanicalsoup.StatefulBrowser(raise_on_404=True)
         browser.open(f'{url}/login')
         browser.select_form('.login-form')
         browser['Login'] = username
