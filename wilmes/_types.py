@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 PupilId = NewType('PupilId', str)
 MessageId = NewType('MessageId', int)
+NewsItemId = NewType('NewsItemId', int)
 
 
 class Pupil(NamedTuple):
@@ -61,3 +62,36 @@ class Message(MessageInfo):
                 line.replace('\xa0', ' ').rstrip(),
                 width=width))
             for line in body_text.splitlines())
+
+
+@dataclass
+class NewsItemInfo:
+    id: NewsItemId
+    origin: str  # URL of the system this message is from
+    pupil_id: PupilId
+    subject: str
+
+
+@dataclass
+class NewsItem(NewsItemInfo):
+    timestamp: datetime
+    sender_id: int
+    sender: str
+    body: str
+
+    @classmethod
+    def from_info_and_attrs(
+            cls,
+            info: NewsItemInfo,
+            *,
+            timestamp: datetime,
+            sender_id: int,
+            sender: str,
+            body: str,
+    ) -> 'NewsItem':
+        return cls(
+            timestamp=timestamp,
+            sender_id=sender_id,
+            sender=sender,
+            body=body,
+            **asdict(info))

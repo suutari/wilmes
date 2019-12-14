@@ -1,5 +1,14 @@
 from ._client import Client, Connection
-from ._types import Message, MessageId, MessageInfo, Pupil, PupilId
+from ._types import (
+    Message,
+    MessageId,
+    MessageInfo,
+    NewsItem,
+    NewsItemId,
+    NewsItemInfo,
+    Pupil,
+    PupilId,
+)
 
 __all__ = [
     'Client',
@@ -7,6 +16,9 @@ __all__ = [
     'Message',
     'MessageId',
     'MessageInfo',
+    'NewsItem',
+    'NewsItemId',
+    'NewsItemInfo',
     'Pupil',
     'PupilId',
 ]

@@ -2,7 +2,7 @@ import re
 import urllib.parse
 from datetime import datetime
 from types import TracebackType
-from typing import Dict, Iterable, List, Optional, Protocol, Type
+from typing import Dict, Iterable, List, Optional, Protocol, Tuple, Type
 
 import bs4
 import mechanicalsoup
@@ -12,10 +12,20 @@ from dateutil.parser import parse as parse_datetime
 
 from ._bs_utils import delete_subelements, stringify_contents
 from ._settings import TZ
-from ._types import Message, MessageId, MessageInfo, Pupil, PupilId
+from ._types import (
+    Message,
+    MessageId,
+    MessageInfo,
+    NewsItem,
+    NewsItemId,
+    NewsItemInfo,
+    Pupil,
+    PupilId,
+)
 
 PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
+NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
 
 
 class Client:
@@ -164,6 +174,75 @@ class Connection:
             raise Exception(f'Cannot parse message: {url}')
         delete_subelements(body, ['h1', 'table', '.printout-footer'])
         return stringify_contents(body)
+
+    def fetch_news_list(self, pupil_id: PupilId) -> List[NewsItemInfo]:
+        page = self._browse(f'/!{pupil_id}/news')
+        link_matches = (
+            (a_elem, NEWS_ITEM_LINK_RX.match(a_elem.get('href', '')))
+            for a_elem in page.find_all('a', href=True)
+            if a_elem and a_elem.get('class')
+        )
+        return [
+            NewsItemInfo(
+                id=NewsItemId(int(match.group('news_id'))),
+                origin=self.url,
+                pupil_id=pupil_id,
+                subject=a_elem.text,
+            )
+            for (a_elem, match) in link_matches
+            if match
+        ]
+
+    def fetch_news_item(self, news_item_info: NewsItemInfo) -> NewsItem:
+        elem = self._fetch_news_item_body(
+            news_item_info.pupil_id, news_item_info.id)
+
+        def select(element: Tag, selector: str) -> Tag:
+            result = element.select_one(selector)
+            if not result:
+                raise Exception(
+                    f'Cannot find "{selector}" from {news_item_info}')
+            return result
+
+        body_element = select(elem, '#news-content')
+        metadata = select(elem, '.horizontal-link-container')
+        teacher_link = select(metadata, 'a.ope')
+        (sender_id, sender) = self._parse_teacher_link(teacher_link)
+        date_span = select(metadata, 'span.small')
+        timestamp = _parse_timestamp(date_span.text.split()[-1])
+
+        return NewsItem.from_info_and_attrs(
+            news_item_info,
+            timestamp=timestamp,
+            sender_id=sender_id,
+            sender=sender,
+            body=stringify_contents(body_element))
+
+    def _fetch_news_item_body(
+            self,
+            pupil_id: PupilId,
+            news_item_id: NewsItemId,
+    ) -> Tag:
+        url = f'/!{pupil_id}/news/{news_item_id}'
+        page = self._browse(url)
+        body = page.select_one('.panel-body')
+        if not body:
+            raise Exception(f'Cannot parse news item: {url}')
+        return body
+
+    def _parse_teacher_link(self, teacher_link: Tag) -> Tuple[int, str]:
+        teacher_href = teacher_link.get('href', '')
+        if '/profiles/teachers/' not in teacher_href:
+            raise Exception(f'Cannot parse teacher link: {teacher_link}')
+        teacher_id = int(teacher_href.rsplit('/profiles/teachers/', 1)[-1])
+        name = teacher_link.text
+        match = re.match(r'^(.*) \((.*)\)$', name)
+        if match:
+            text1 = match.group(1)
+            text2 = match.group(2)
+            if len(text1) < len(text2):
+                name = f'{text2} ({text1})'
+        return (teacher_id, name)
 
     def logout(self) -> None:
         """
