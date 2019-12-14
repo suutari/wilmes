@@ -5,15 +5,6 @@ from .form import Form
 
 
 class StatefulBrowser(Browser):
-    def __init__(
-            self,
-            # session=None,
-            # soup_config={'features': 'lxml'},
-            # requests_adapters=None,
-            # raise_on_404=False,
-            # user_agent=None,
-    ) -> None: ...
-
     def absolute_url(self, url: str) -> str: ...
 
     def open(
