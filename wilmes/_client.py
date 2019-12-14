@@ -4,7 +4,9 @@ from datetime import datetime
 from types import TracebackType
 from typing import Dict, Iterable, List, Optional, Protocol, Type
 
+import bs4
 import mechanicalsoup
+import requests
 from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
@@ -72,7 +74,7 @@ class Connection:
     ) -> None:
         self.url = url
         self.browser = browser
-        self.front_page = browser.get_current_page()
+        self.front_page = self._get_current_page_or_fail()
         links = self.front_page.find_all('a', href=True)
         self.pupils = self._parse_pupils(links)
         self.new_message_counts = self._parse_new_message_counts(links)
@@ -155,8 +157,7 @@ class Connection:
         Get message contents as HTML string.
         """
         url = f'/!{pupil_id}/messages/{message_id}?printable'
-        self.browser.open_relative(url)
-        page = self.browser.get_current_page()
+        page = self._browse(url)
         body = page.find('body')
         if not body:
             return ''
@@ -175,6 +176,27 @@ class Connection:
         response = self.browser.post(logout_url)
         response.raise_for_status()
         self.browser = mechanicalsoup.StatefulBrowser()
+
+    def _browse(
+            self,
+            relative_url: str,
+    ) -> bs4.BeautifulSoup:
+        self._browse_simple(relative_url)
+        return self._get_current_page_or_fail()
+
+    def _browse_simple(
+            self,
+            relative_url: str,
+    ) -> requests.Response:
+        response = self.browser.open_relative(relative_url)
+        response.raise_for_status()
+        return response
+
+    def _get_current_page_or_fail(self) -> bs4.BeautifulSoup:
+        page = self.browser.get_current_page()
+        if not page:
+            raise Exception(f'Error reading page at {self.browser.get_url()}')
+        return page
 
 
 class _PytzTimezone(Protocol):
