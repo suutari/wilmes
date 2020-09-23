@@ -208,15 +208,26 @@ class Connection:
             for a_elem in page.find_all('a', href=True)
             if a_elem and a_elem.get('class')
         )
-        return [
-            NewsItemInfo(
-                id=NewsItemId(int(match.group('news_id'))),
-                origin=self.url,
-                pupil_id=pupil_id,
-                subject=a_elem.text,
-            )
+        news_map = {
+            int(match.group('news_id')): a_elem.text.strip()
             for (a_elem, match) in link_matches
             if match
+        }
+        for well in page.select('.well'):
+            title_elem = well.find('h3')
+            a_elem = well.find('a', href=True)
+            href = a_elem.get('href', '') if a_elem else ''
+            match = NEWS_ITEM_LINK_RX.match(href)
+            if title_elem and match:
+                news_map[int(match.group('news_id'))] = title_elem.text.strip()
+        return [
+            NewsItemInfo(
+                id=NewsItemId(news_id),
+                origin=self.url,
+                pupil_id=pupil_id,
+                subject=subject,
+            )
+            for (news_id, subject) in sorted(news_map.items())
         ]
 
     def fetch_news_item(self, news_item_info: NewsItemInfo) -> NewsItem:
