@@ -26,6 +26,8 @@ from ._types import (
 PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
+YEARLESS_DATE_RX = re.compile(
+    r'^((0?[1-9])|[1-2][0-9]|3[01])\.((0?[1-9])|(1[0-2]))\.$')
 
 
 class Client:
@@ -280,7 +282,9 @@ class _PytzTimezone(Protocol):
 
 
 def _parse_timestamp(string: str, tz: _PytzTimezone = TZ) -> datetime:
-    dt = parse_datetime(string)
+    if YEARLESS_DATE_RX.match(string):
+        string += str(datetime.now().year)
+    dt = parse_datetime(string, dayfirst=(string.count('.') >= 2))
     if dt.tzinfo:
         return dt
     return tz.localize(dt)
