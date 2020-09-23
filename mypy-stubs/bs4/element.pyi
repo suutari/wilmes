@@ -66,6 +66,12 @@ class Tag(PageElement):
             **kwargs: _MatchAgainst,
     ) -> ResultSet['Tag']: ...
 
+    def select(
+            self,
+            selector: str,
+            # namespaces=None, limit=None, **kwargs,
+    ) -> List['Tag']: ...
+
     def select_one(
             self,
             selector: str,
