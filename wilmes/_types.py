@@ -99,7 +99,7 @@ class NewsItemInfo:
 
 
 @dataclass
-class NewsItem(NewsItemInfo):
+class NewsItem(_MessageWithBody, NewsItemInfo):
     timestamp: datetime
     sender_id: Optional[int]
     sender: str
