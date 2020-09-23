@@ -21,11 +21,14 @@ from ._types import (
     NewsItemInfo,
     Pupil,
     PupilId,
+    ReplyMessage,
 )
 
 PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
+REPLY_HEADER_RX = re.compile(
+    r'(?P<from>.* \(.*\)) .* (?P<date>[0-9][0-9.:/ ]+)$')
 YEARLESS_DATE_RX = re.compile(
     r'^((0?[1-9])|[1-2][0-9]|3[01])\.((0?[1-9])|(1[0-2]))\.$')
 
@@ -157,15 +160,16 @@ class Connection:
             raise ValueError(
                 f'Invalid message origin: '
                 f'{message_info.origin} (expected {self.url})')
-        body = self.fetch_message_body(message_info.pupil_id, message_info.id)
-        message = Message.from_info_and_body(message_info, body)
+        body = self._fetch_message_body(message_info.pupil_id, message_info.id)
+        (body_text, replies) = self._parse_message_body(body)
+        message = Message.from_info_and_body(message_info, body_text, replies)
         return message
 
-    def fetch_message_body(
+    def _fetch_message_body(
             self,
             pupil_id: PupilId,
             message_id: MessageId,
-    ) -> str:
+    ) -> Tag:
         """
         Get message contents as HTML string.
         """
@@ -175,7 +179,27 @@ class Connection:
         if not body:
             raise Exception(f'Cannot parse message: {url}')
         delete_subelements(body, ['h1', 'table', '.printout-footer'])
-        return stringify_contents(body)
+        return body
+
+    def _parse_message_body(self, body: Tag) -> Tuple[str, List[ReplyMessage]]:
+        reply_divs = body.find_all(attrs={'class': 'm-replybox'})
+        replies = [self._parse_reply_message(x) for x in reply_divs]
+        for div in reply_divs:
+            div.replace_with('')
+        body_text = stringify_contents(body)
+        return (body_text, replies)
+
+    def _parse_reply_message(self, div: Tag) -> ReplyMessage:
+        header = div.find('h2')
+        content = div.select_one('.inner')
+        match = REPLY_HEADER_RX.match(header.text if header else '')
+        if not match or not content:
+            raise Exception(f'Cannot parse reply: {div}')
+        header_data = match.groupdict()
+        return ReplyMessage(
+            timestamp=_parse_timestamp(header_data['date']),
+            sender=header_data['from'],
+            body=stringify_contents(content))
 
     def fetch_news_list(self, pupil_id: PupilId) -> List[NewsItemInfo]:
         page = self._browse(f'/!{pupil_id}/news')

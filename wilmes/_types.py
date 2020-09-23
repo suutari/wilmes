@@ -1,7 +1,7 @@
 import textwrap
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import NamedTuple, NewType
+from typing import Iterable, List, NamedTuple, NewType
 
 from bs4 import BeautifulSoup
 
@@ -35,25 +35,25 @@ class MessageInfo:
             f'{self.subject}')
 
 
-@dataclass
-class Message(MessageInfo):
+class _MessageWithBody:
+    timestamp: datetime
+    sender: str
     body: str
-
-    @classmethod
-    def from_info_and_body(cls, info: MessageInfo, body: str) -> 'Message':
-        message_data = dict(asdict(info), body=body)
-        return cls(**message_data)
 
     def __str__(self) -> str:
         return self.to_text()
 
     def to_text(self, width: int = 70) -> str:
         return (
-            f'Subject: {self.subject}\n'
-            f'Date: {self.timestamp}\n'
-            f'From: {self.sender}\n'
+            f'{self.get_header_lines()}'
             f'\n'
             f'{self.get_cleaned_body_text(width)}')
+
+    def get_header_lines(self) -> str:
+        return (
+            f'Date: {self.timestamp}\n'
+            f'From: {self.sender}\n'
+        )
 
     def get_cleaned_body_text(self, width: int = 70) -> str:
         body_text = BeautifulSoup(self.body, features='lxml').get_text()
@@ -62,6 +62,32 @@ class Message(MessageInfo):
                 line.replace('\xa0', ' ').rstrip(),
                 width=width))
             for line in body_text.splitlines())
+
+
+@dataclass
+class ReplyMessage(_MessageWithBody):
+    timestamp: datetime
+    sender: str
+    body: str
+
+
+@dataclass
+class Message(_MessageWithBody, MessageInfo):
+    body: str
+    replies: List[ReplyMessage]
+
+    @classmethod
+    def from_info_and_body(
+            cls,
+            info: MessageInfo,
+            body: str,
+            replies: Iterable[ReplyMessage] = (),
+    ) -> 'Message':
+        message_data = dict(asdict(info), body=body, replies=list(replies))
+        return cls(**message_data)
+
+    def get_header_lines(self) -> str:
+        return f'Subject: {self.subject}\n' + super().get_header_lines()
 
 
 @dataclass
