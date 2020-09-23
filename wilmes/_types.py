@@ -121,3 +121,6 @@ class NewsItem(_MessageWithBody, NewsItemInfo):
             sender=sender,
             body=body,
             **asdict(info))
+
+    def get_header_lines(self) -> str:
+        return f'Subject: {self.subject}\n' + super().get_header_lines()
