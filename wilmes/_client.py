@@ -11,6 +11,7 @@ from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
 from ._bs_utils import delete_subelements, stringify_contents
+from ._emojis import replace_emoji_imgs
 from ._settings import TZ
 from ._types import (
     Message,
@@ -179,6 +180,7 @@ class Connection:
         if not body:
             raise Exception(f'Cannot parse message: {url}')
         delete_subelements(body, ['h1', 'table', '.printout-footer'])
+        replace_emoji_imgs(body)
         return body
 
     def _parse_message_body(self, body: Tag) -> Tuple[str, List[ReplyMessage]]:
@@ -264,6 +266,7 @@ class Connection:
         body = page.select_one('.panel-body')
         if not body:
             raise Exception(f'Cannot parse news item: {url}')
+        replace_emoji_imgs(body)
         return body
 
     def _parse_news_item_sender(
