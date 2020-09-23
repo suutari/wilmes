@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Iterable
 
 from bs4.element import Tag
 
