@@ -1,7 +1,7 @@
 import textwrap
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Iterable, List, NamedTuple, NewType
+from typing import Iterable, List, NamedTuple, NewType, Optional
 
 from bs4 import BeautifulSoup
 
@@ -101,7 +101,7 @@ class NewsItemInfo:
 @dataclass
 class NewsItem(NewsItemInfo):
     timestamp: datetime
-    sender_id: int
+    sender_id: Optional[int]
     sender: str
     body: str
 
@@ -111,7 +111,7 @@ class NewsItem(NewsItemInfo):
             info: NewsItemInfo,
             *,
             timestamp: datetime,
-            sender_id: int,
+            sender_id: Optional[int],
             sender: str,
             body: str,
     ) -> 'NewsItem':

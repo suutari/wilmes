@@ -243,8 +243,7 @@ class Connection:
 
         body_element = select(elem, '#news-content')
         metadata = select(elem, '.horizontal-link-container')
-        teacher_link = select(metadata, 'a.ope')
-        (sender_id, sender) = self._parse_teacher_link(teacher_link)
+        (sender_id, sender) = self._parse_news_item_sender(metadata)
         date_span = select(metadata, 'span.small')
         timestamp = _parse_timestamp(date_span.text.split()[-1])
 
@@ -267,18 +266,24 @@ class Connection:
             raise Exception(f'Cannot parse news item: {url}')
         return body
 
+    def _parse_news_item_sender(
+            self,
+            metadata: Tag,
+    ) -> Tuple[Optional[int], str]:
+        teacher_link = metadata.select_one('a.ope')
+        if teacher_link:
+            return self._parse_teacher_link(teacher_link)
+        sender_span = metadata.find('span', attrs={'class': ""})
+        text = sender_span.text.strip() if sender_span else ''
+        sender = _switch_parenthesed_parts(text)
+        return (None, sender)
+
     def _parse_teacher_link(self, teacher_link: Tag) -> Tuple[int, str]:
         teacher_href = teacher_link.get('href', '')
         if '/profiles/teachers/' not in teacher_href:
             raise Exception(f'Cannot parse teacher link: {teacher_link}')
         teacher_id = int(teacher_href.rsplit('/profiles/teachers/', 1)[-1])
-        name = teacher_link.text
-        match = re.match(r'^(.*) \((.*)\)$', name)
-        if match:
-            text1 = match.group(1)
-            text2 = match.group(2)
-            if len(text1) < len(text2):
-                name = f'{text2} ({text1})'
+        name = _switch_parenthesed_parts(teacher_link.text)
         return (teacher_id, name)
 
     def logout(self) -> None:
@@ -323,3 +328,12 @@ def _parse_timestamp(string: str, tz: _PytzTimezone = TZ) -> datetime:
     if dt.tzinfo:
         return dt
     return tz.localize(dt)
+
+
+def _switch_parenthesed_parts(string: str) -> str:
+    match = re.match(r'^(.*) \((.*)\)$', string)
+    if not match:
+        return string
+    text1 = match.group(1)
+    text2 = match.group(2)
+    return f'{text2} ({text1})'
