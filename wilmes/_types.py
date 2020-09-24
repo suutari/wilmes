@@ -25,6 +25,7 @@ class MessageInfo:
     folder: str
     sender_id: int
     sender: str
+    reply_count: int
     is_unread: bool
 
     def __str__(self) -> str:

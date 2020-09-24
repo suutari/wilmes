@@ -151,6 +151,7 @@ class Connection:
                 folder=x['Folder'],
                 sender_id=x['SenderId'],
                 sender=x['Sender'],
+                reply_count=x.get('Replies', 0),
                 is_unread=(x.get('Status', 0) == 1),
             )
             for x in response.json()['Messages']
