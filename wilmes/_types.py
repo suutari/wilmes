@@ -69,6 +69,7 @@ class ReplyMessage(_MessageWithBody):
     timestamp: datetime
     sender: str
     body: str
+    sender_id: Optional[int] = None
 
 
 @dataclass
