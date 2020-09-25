@@ -28,6 +28,7 @@ from ._types import (
 
 PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
+PROFILE_HREF_RX = re.compile(r'.*/profiles/([^/]+)/(\d+)')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
 REPLY_HEADER_RX = re.compile(
     r'(?P<from>.*)\xa0? replied [^0-9]*(?P<date>[0-9][0-9.:/ ]+)$')
@@ -265,6 +266,7 @@ class Connection:
         metadata = select(elem, '.horizontal-link-container')
         date_span = select(metadata, 'span.small')
         timestamp = _parse_timestamp(date_span.text.split()[-1])
+        date_span.replace_with('')
         sender = self._parse_news_item_sender(metadata)
 
         return NewsItem.from_info_and_attrs(
@@ -287,20 +289,27 @@ class Connection:
         return body
 
     def _parse_news_item_sender(self, metadata: Tag) -> Person:
-        teacher_link = metadata.select_one('a.ope')
-        if teacher_link:
-            return self._parse_teacher_link(teacher_link)
-        sender_span = metadata.find('span', attrs={'class': ""})
-        text = sender_span.text.strip() if sender_span else ''
-        return Person(_switch_parenthesed_parts(text))
+        person = self._parse_person_element(metadata)
+        person.name = _switch_parenthesed_parts(person.name)
+        return person
 
-    def _parse_teacher_link(self, teacher_link: Tag) -> Person:
-        teacher_href = teacher_link.get('href', '')
-        if '/profiles/teachers/' not in teacher_href:
-            raise Exception(f'Cannot parse teacher link: {teacher_link}')
-        teacher_id = int(teacher_href.rsplit('/profiles/teachers/', 1)[-1])
-        name = _switch_parenthesed_parts(teacher_link.text)
-        return Person(name=name, id=teacher_id)
+    def _parse_person_element(self, element: Tag) -> Person:
+        profile_link = element.select_one('a.profile-link')
+        if profile_link:
+            return self._parse_profile_link(profile_link)
+        else:
+            return Person(element.text.strip())
+
+    def _parse_profile_link(self, profile_link: Tag) -> Person:
+        profile_href = profile_link.get('href', '')
+        match = PROFILE_HREF_RX.match(profile_href)
+        if not match:
+            raise Exception(f'Cannot parse profile link: {profile_link}')
+        return Person(
+            name=profile_link.text,
+            id=int(match.group(2)),
+            type=match.group(1),
+        )
 
     def logout(self) -> None:
         """
