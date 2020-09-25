@@ -6,8 +6,10 @@ from ._types import (
     NewsItem,
     NewsItemId,
     NewsItemInfo,
+    Person,
     Pupil,
     PupilId,
+    ReplyMessage,
 )
 
 __all__ = [
@@ -19,6 +21,8 @@ __all__ = [
     'NewsItem',
     'NewsItemId',
     'NewsItemInfo',
+    'Person',
     'Pupil',
     'PupilId',
+    'ReplyMessage',
 ]
