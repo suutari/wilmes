@@ -106,6 +106,10 @@ class Connection:
         links = self.front_page.find_all('a', href=True)
         self.pupils = self._parse_pupils(links)
         self.new_message_counts = self._parse_new_message_counts(links)
+        own_name_span = self.front_page.select_one('.name-container .teacher')
+        if not own_name_span:
+            raise Exception('Cannot find the span containing your name')
+        self.own_name = own_name_span.text
 
     def _parse_pupils(self, links: Iterable[Tag]) -> Dict[PupilId, Pupil]:
         """
@@ -221,7 +225,9 @@ class Connection:
         if profile_link:
             person = self._parse_profile_link(profile_link)
         else:
-            person = Person(header_data['from'])
+            from_text = header_data['from']
+            name = from_text if from_text.lower() != 'you' else self.own_name
+            person = Person(name)
         return ReplyMessage(
             timestamp=_parse_timestamp(header_data['date']),
             sender=person,
