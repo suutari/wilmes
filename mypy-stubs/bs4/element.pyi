@@ -31,6 +31,8 @@ class PageElement:
 
 
 class Tag(PageElement):
+    name: str
+
     @overload
     def get(self, key: str) -> Optional[str]: ...
 
