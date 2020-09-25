@@ -35,7 +35,7 @@ EMOJI_MAP = {
     'ninja': '🥷',  # ninja
     'pinch': '😣',  # pinch
     'sick': '🤢',  # sick
-    'sideways': '🙃',  # sideways
+    'sideways': '😏',  # sideways
     'silly': '🙃',  # silly
     'sleeping': '😴',  # sleeping
     'unsure': '🤔',  # unsure
