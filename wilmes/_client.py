@@ -103,7 +103,8 @@ class Connection:
     ) -> None:
         self.url = url
         self.browser = browser
-        self.front_page = self._browse(f'/?langid={ENGLISH_LANG_ID}')
+        self._lang_is_set = False
+        self.front_page = self._get_current_page_or_fail()
         links = self.front_page.find_all('a', href=True)
         self.pupils = self._parse_pupils(links)
         self.new_message_counts = self._parse_new_message_counts(links)
@@ -364,6 +365,10 @@ class Connection:
             self,
             relative_url: str,
     ) -> requests.Response:
+        if not self._lang_is_set and not relative_url.startswith('/?langid='):
+            self._browse(f'/?langid={ENGLISH_LANG_ID}')
+            self._lang_is_set = True
+
         response = self.browser.open_relative(relative_url)
         response.raise_for_status()
         return response
