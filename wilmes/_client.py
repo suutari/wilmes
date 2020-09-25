@@ -214,12 +214,17 @@ class Connection:
         header = div.find('h2')
         content = div.select_one('.inner')
         match = REPLY_HEADER_RX.match(header.text if header else '')
-        if not match or not content:
+        if not header or not match or not content:
             raise Exception(f'Cannot parse reply: {div}')
         header_data = match.groupdict()
+        profile_link = header.select_one('a.profile-link')
+        if profile_link:
+            person = self._parse_profile_link(profile_link)
+        else:
+            person = Person(header_data['from'])
         return ReplyMessage(
             timestamp=_parse_timestamp(header_data['date']),
-            sender=Person(header_data['from']),
+            sender=person,
             body=stringify_contents(content))
 
     def fetch_news_list(self, pupil_id: PupilId) -> List[NewsItemInfo]:
