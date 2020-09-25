@@ -33,6 +33,8 @@ REPLY_HEADER_RX = re.compile(
 YEARLESS_DATE_RX = re.compile(
     r'^((0?[1-9])|[1-2][0-9]|3[01])\.((0?[1-9])|(1[0-2]))\.$')
 
+ENGLISH_LANG_ID = 3
+
 
 class Client:
     def __init__(self, url: str, username: str, password: str) -> None:
@@ -91,7 +93,7 @@ class Connection:
     ) -> None:
         self.url = url
         self.browser = browser
-        self.front_page = self._get_current_page_or_fail()
+        self.front_page = self._browse(f'/?langid={ENGLISH_LANG_ID}')
         links = self.front_page.find_all('a', href=True)
         self.pupils = self._parse_pupils(links)
         self.new_message_counts = self._parse_new_message_counts(links)
