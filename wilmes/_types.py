@@ -1,5 +1,5 @@
 import textwrap
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List, NamedTuple, NewType, Optional
 
@@ -16,6 +16,13 @@ class Pupil(NamedTuple):
 
 
 @dataclass
+class Person:
+    name: str
+    id: Optional[int] = None
+    type: Optional[str] = None
+
+
+@dataclass
 class MessageInfo:
     id: MessageId
     origin: str  # URL of the system this message is from
@@ -23,22 +30,21 @@ class MessageInfo:
     subject: str
     timestamp: datetime
     folder: str
-    sender_id: int
-    sender: str
+    sender: Person
     reply_count: int
     is_unread: bool
 
     def __str__(self) -> str:
         return (
             f'{self.timestamp:%Y-%m-%d %H:%M} '
-            f'{self.sender:40} '
+            f'{self.sender.name:40} '
             f'{"* " if self.is_unread else "  "}'
             f'{self.subject}')
 
 
 class _MessageWithBody:
     timestamp: datetime
-    sender: str
+    sender: Person
     body: str
 
     def __str__(self) -> str:
@@ -53,7 +59,7 @@ class _MessageWithBody:
     def get_header_lines(self) -> str:
         return (
             f'Date: {self.timestamp}\n'
-            f'From: {self.sender}\n'
+            f'From: {self.sender.name}\n'
         )
 
     def get_cleaned_body_text(self, width: int = 70) -> str:
@@ -68,9 +74,8 @@ class _MessageWithBody:
 @dataclass
 class ReplyMessage(_MessageWithBody):
     timestamp: datetime
-    sender: str
+    sender: Person
     body: str
-    sender_id: Optional[int] = None
 
 
 @dataclass
@@ -85,8 +90,19 @@ class Message(_MessageWithBody, MessageInfo):
             body: str,
             replies: Iterable[ReplyMessage] = (),
     ) -> 'Message':
-        message_data = dict(asdict(info), body=body, replies=list(replies))
-        return cls(**message_data)
+        return cls(
+            id=info.id,
+            origin=info.origin,
+            pupil_id=info.pupil_id,
+            subject=info.subject,
+            timestamp=info.timestamp,
+            folder=info.folder,
+            sender=info.sender,
+            reply_count=info.reply_count,
+            is_unread=info.is_unread,
+            body=body,
+            replies=list(replies),
+        )
 
     def get_header_lines(self) -> str:
         return f'Subject: {self.subject}\n' + super().get_header_lines()
@@ -103,8 +119,7 @@ class NewsItemInfo:
 @dataclass
 class NewsItem(_MessageWithBody, NewsItemInfo):
     timestamp: datetime
-    sender_id: Optional[int]
-    sender: str
+    sender: Person
     body: str
 
     @classmethod
@@ -113,16 +128,18 @@ class NewsItem(_MessageWithBody, NewsItemInfo):
             info: NewsItemInfo,
             *,
             timestamp: datetime,
-            sender_id: Optional[int],
-            sender: str,
+            sender: Person,
             body: str,
     ) -> 'NewsItem':
         return cls(
+            id=info.id,
+            origin=info.origin,
+            pupil_id=info.pupil_id,
+            subject=info.subject,
             timestamp=timestamp,
-            sender_id=sender_id,
             sender=sender,
             body=body,
-            **asdict(info))
+        )
 
     def get_header_lines(self) -> str:
         return f'Subject: {self.subject}\n' + super().get_header_lines()

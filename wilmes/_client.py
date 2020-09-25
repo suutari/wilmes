@@ -2,7 +2,7 @@ import re
 import urllib.parse
 from datetime import datetime
 from types import TracebackType
-from typing import Dict, Iterable, List, Optional, Protocol, Tuple, Type
+from typing import Dict, Iterable, List, Optional, Protocol, Type
 
 import bs4
 import mechanicalsoup
@@ -20,6 +20,7 @@ from ._types import (
     NewsItem,
     NewsItemId,
     NewsItemInfo,
+    Person,
     Pupil,
     PupilId,
     ReplyMessage,
@@ -151,8 +152,10 @@ class Connection:
                 subject=x['Subject'],
                 timestamp=_parse_timestamp(x['TimeStamp']),
                 folder=x['Folder'],
-                sender_id=x['SenderId'],
-                sender=x['Sender'],
+                sender=Person(
+                    name=x['Sender'],
+                    id=x['SenderId'],
+                ),
                 reply_count=x.get('Replies', 0),
                 is_unread=(x.get('Status', 0) == 1),
             )
@@ -207,7 +210,7 @@ class Connection:
         header_data = match.groupdict()
         return ReplyMessage(
             timestamp=_parse_timestamp(header_data['date']),
-            sender=header_data['from'],
+            sender=Person(header_data['from']),
             body=stringify_contents(content))
 
     def fetch_news_list(self, pupil_id: PupilId) -> List[NewsItemInfo]:
@@ -252,14 +255,13 @@ class Connection:
 
         body_element = select(elem, '#news-content')
         metadata = select(elem, '.horizontal-link-container')
-        (sender_id, sender) = self._parse_news_item_sender(metadata)
         date_span = select(metadata, 'span.small')
         timestamp = _parse_timestamp(date_span.text.split()[-1])
+        sender = self._parse_news_item_sender(metadata)
 
         return NewsItem.from_info_and_attrs(
             news_item_info,
             timestamp=timestamp,
-            sender_id=sender_id,
             sender=sender,
             body=stringify_contents(body_element))
 
@@ -276,25 +278,21 @@ class Connection:
         replace_emoji_imgs(body)
         return body
 
-    def _parse_news_item_sender(
-            self,
-            metadata: Tag,
-    ) -> Tuple[Optional[int], str]:
+    def _parse_news_item_sender(self, metadata: Tag) -> Person:
         teacher_link = metadata.select_one('a.ope')
         if teacher_link:
             return self._parse_teacher_link(teacher_link)
         sender_span = metadata.find('span', attrs={'class': ""})
         text = sender_span.text.strip() if sender_span else ''
-        sender = _switch_parenthesed_parts(text)
-        return (None, sender)
+        return Person(_switch_parenthesed_parts(text))
 
-    def _parse_teacher_link(self, teacher_link: Tag) -> Tuple[int, str]:
+    def _parse_teacher_link(self, teacher_link: Tag) -> Person:
         teacher_href = teacher_link.get('href', '')
         if '/profiles/teachers/' not in teacher_href:
             raise Exception(f'Cannot parse teacher link: {teacher_link}')
         teacher_id = int(teacher_href.rsplit('/profiles/teachers/', 1)[-1])
         name = _switch_parenthesed_parts(teacher_link.text)
-        return (teacher_id, name)
+        return Person(name=name, id=teacher_id)
 
     def logout(self) -> None:
         """
