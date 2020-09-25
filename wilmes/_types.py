@@ -79,7 +79,7 @@ class Message(_MessageWithBody, MessageInfo):
     replies: List[ReplyMessage]
 
     @classmethod
-    def from_info_and_body(
+    def from_info_and_attrs(
             cls,
             info: MessageInfo,
             body: str,

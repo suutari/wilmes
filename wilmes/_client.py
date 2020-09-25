@@ -10,7 +10,7 @@ import requests
 from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
-from ._bs_utils import delete_subelements, stringify_contents
+from ._bs_utils import stringify_contents
 from ._emojis import replace_emoji_imgs
 from ._settings import TZ
 from ._types import (
@@ -29,7 +29,7 @@ PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
 REPLY_HEADER_RX = re.compile(
-    r'(?P<from>.* \(.*\)) .* (?P<date>[0-9][0-9.:/ ]+)$')
+    r'(?P<from>.*)\xa0? replied [^0-9]*(?P<date>[0-9][0-9.:/ ]+)$')
 YEARLESS_DATE_RX = re.compile(
     r'^((0?[1-9])|[1-2][0-9]|3[01])\.((0?[1-9])|(1[0-2]))\.$')
 
@@ -165,8 +165,10 @@ class Connection:
                 f'Invalid message origin: '
                 f'{message_info.origin} (expected {self.url})')
         body = self._fetch_message_body(message_info.pupil_id, message_info.id)
-        (body_text, replies) = self._parse_message_body(body)
-        message = Message.from_info_and_body(message_info, body_text, replies)
+        message_content = self._parse_message_content(body)
+        replies = self._parse_replies(body)
+        message = Message.from_info_and_attrs(
+            message_info, message_content, replies)
         return message
 
     def _fetch_message_body(
@@ -177,22 +179,24 @@ class Connection:
         """
         Get message contents as HTML string.
         """
-        url = f'/!{pupil_id}/messages/{message_id}?printable'
+        url = f'/!{pupil_id}/messages/{message_id}'
         page = self._browse(url)
         body = page.find('body')
         if not body:
             raise Exception(f'Cannot parse message: {url}')
-        delete_subelements(body, ['h1', 'table', '.printout-footer'])
         replace_emoji_imgs(body)
         return body
 
-    def _parse_message_body(self, body: Tag) -> Tuple[str, List[ReplyMessage]]:
+    def _parse_message_content(self, body: Tag) -> str:
+        message_div = body.select_one('.ckeditor.hidden')
+        if not message_div:
+            raise Exception('Cannot find message div')
+        return stringify_contents(message_div)
+
+    def _parse_replies(self, body: Tag) -> List[ReplyMessage]:
         reply_divs = body.find_all(attrs={'class': 'm-replybox'})
         replies = [self._parse_reply_message(x) for x in reply_divs]
-        for div in reply_divs:
-            div.replace_with('')
-        body_text = stringify_contents(body)
-        return (body_text, replies)
+        return replies
 
     def _parse_reply_message(self, div: Tag) -> ReplyMessage:
         header = div.find('h2')
