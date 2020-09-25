@@ -36,6 +36,13 @@ YEARLESS_DATE_RX = re.compile(
 
 ENGLISH_LANG_ID = 3
 
+SENDER_TYPES = {
+    1: 'teachers',
+    2: 'unknown2',
+    3: 'personnel',
+    4: 'others',
+}
+
 
 class Client:
     def __init__(self, url: str, username: str, password: str) -> None:
@@ -155,6 +162,7 @@ class Connection:
                 sender=Person(
                     name=x['Sender'],
                     id=x['SenderId'],
+                    type=SENDER_TYPES.get(x['SenderType']),
                 ),
                 reply_count=x.get('Replies', 0),
                 is_unread=(x.get('Status', 0) == 1),
