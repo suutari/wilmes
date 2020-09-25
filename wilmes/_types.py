@@ -80,6 +80,7 @@ class ReplyMessage(_MessageWithBody):
 
 @dataclass
 class Message(_MessageWithBody, MessageInfo):
+    recipients: List[Person]
     body: str
     replies: List[ReplyMessage]
 
@@ -87,6 +88,7 @@ class Message(_MessageWithBody, MessageInfo):
     def from_info_and_attrs(
             cls,
             info: MessageInfo,
+            recipients: Iterable[Person],
             body: str,
             replies: Iterable[ReplyMessage] = (),
     ) -> 'Message':
@@ -100,6 +102,7 @@ class Message(_MessageWithBody, MessageInfo):
             sender=info.sender,
             reply_count=info.reply_count,
             is_unread=info.is_unread,
+            recipients=list(recipients),
             body=body,
             replies=list(replies),
         )

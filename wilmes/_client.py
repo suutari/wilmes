@@ -28,6 +28,7 @@ from ._types import (
 
 PUPIL_LINK_RX = re.compile(r'^/!(\d+)/?$')
 MESSAGE_NOTIFICATION_LINK_RX = re.compile(r'^/!(\d+)/messages$')
+PERSON_LIST_RX = re.compile(r'([^(,]+(\([^)]*\)[^(,]*)*)((, )|$)')
 PROFILE_HREF_RX = re.compile(r'.*/profiles/([^/]+)/(\d+)')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
 REPLY_HEADER_RX = re.compile(
@@ -181,10 +182,11 @@ class Connection:
                 f'Invalid message origin: '
                 f'{message_info.origin} (expected {self.url})')
         body = self._fetch_message_body(message_info.pupil_id, message_info.id)
+        recipients = self._parse_recipients(body)
         message_content = self._parse_message_content(body)
         replies = self._parse_replies(body)
         message = Message.from_info_and_attrs(
-            message_info, message_content, replies)
+            message_info, recipients, message_content, replies)
         return message
 
     def _fetch_message_body(
@@ -195,13 +197,29 @@ class Connection:
         """
         Get message contents as HTML string.
         """
-        url = f'/!{pupil_id}/messages/{message_id}'
+        url = f'/!{pupil_id}/messages/{message_id}?recipients'
         page = self._browse(url)
         body = page.find('body')
         if not body:
             raise Exception(f'Cannot parse message: {url}')
         replace_emoji_imgs(body)
         return body
+
+    def _parse_recipients(self, body: Tag) -> List[Person]:
+        recip_div = body.select_one('#recipients-cell')
+        if not recip_div:
+            raise Exception('Cannot find recipients div')
+        result: List[Person] = []
+        for part in recip_div:
+            if isinstance(part, str):
+                matches = PERSON_LIST_RX.finditer(part.strip().rstrip(','))
+                names = (x.group(1).strip() for x in matches)
+                result.extend(Person(x) for x in names if x)
+            else:
+                result.append(self._parse_person_element(part))
+        if len(result) == 1 and result[0] == Person('Hidden'):
+            return []
+        return result
 
     def _parse_message_content(self, body: Tag) -> str:
         message_div = body.select_one('.ckeditor.hidden')
@@ -305,7 +323,11 @@ class Connection:
         return person
 
     def _parse_person_element(self, element: Tag) -> Person:
-        profile_link = element.select_one('a.profile-link')
+        profile_link: Optional[Tag]
+        if element.name == 'a' and 'profile-link' in element.get('class', []):
+            profile_link = element
+        else:
+            profile_link = element.select_one('a.profile-link')
         if profile_link:
             return self._parse_profile_link(profile_link)
         else:
