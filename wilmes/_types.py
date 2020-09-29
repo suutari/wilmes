@@ -122,6 +122,10 @@ class NewsItemInfo:
     subject: str
     timestamp: Optional[datetime]
 
+    def __str__(self) -> str:
+        date = self.timestamp.date() if self.timestamp else "????-??-??"
+        return f'News {self.id}: {date} "{self.subject}"'
+
 
 @dataclass
 class NewsItem(_MessageWithBody, NewsItemInfo):
