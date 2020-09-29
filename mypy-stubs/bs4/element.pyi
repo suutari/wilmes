@@ -33,6 +33,12 @@ class PageElement:
 class Tag(PageElement):
     name: str
 
+    next_element: Optional[Tag]
+    next_sibling: Optional[Tag]
+    parent: Optional[Tag]
+    previous_element: Optional[Tag]
+    previous_sibling: Optional[Tag]
+
     @overload
     def get(self, key: str) -> Optional[str]: ...
 

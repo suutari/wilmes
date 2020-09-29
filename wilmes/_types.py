@@ -28,7 +28,7 @@ class MessageInfo:
     origin: str  # URL of the system this message is from
     pupil_id: PupilId
     subject: str
-    timestamp: datetime
+    last_timestamp: datetime
     folder: str
     sender: Person
     reply_count: int
@@ -36,7 +36,7 @@ class MessageInfo:
 
     def __str__(self) -> str:
         return (
-            f'{self.timestamp:%Y-%m-%d %H:%M} '
+            f'{self.last_timestamp:%Y-%m-%d %H:%M} '
             f'{self.sender.name:40} '
             f'{"* " if self.is_unread else "  "}'
             f'{self.subject}')
@@ -80,6 +80,7 @@ class ReplyMessage(_MessageWithBody):
 
 @dataclass
 class Message(_MessageWithBody, MessageInfo):
+    timestamp: datetime
     recipients: List[Person]
     body: str
     replies: List[ReplyMessage]
@@ -88,6 +89,7 @@ class Message(_MessageWithBody, MessageInfo):
     def from_info_and_attrs(
             cls,
             info: MessageInfo,
+            timestamp: datetime,
             recipients: Iterable[Person],
             body: str,
             replies: Iterable[ReplyMessage] = (),
@@ -97,7 +99,8 @@ class Message(_MessageWithBody, MessageInfo):
             origin=info.origin,
             pupil_id=info.pupil_id,
             subject=info.subject,
-            timestamp=info.timestamp,
+            timestamp=timestamp,
+            last_timestamp=info.last_timestamp,
             folder=info.folder,
             sender=info.sender,
             reply_count=info.reply_count,

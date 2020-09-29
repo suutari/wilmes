@@ -164,7 +164,7 @@ class Connection:
                 origin=self.url,
                 pupil_id=pupil_id,
                 subject=x['Subject'],
-                timestamp=_parse_timestamp(x['TimeStamp']),
+                last_timestamp=_parse_timestamp(x['TimeStamp']),
                 folder=x['Folder'],
                 sender=Person(
                     name=x['Sender'],
@@ -183,11 +183,12 @@ class Connection:
                 f'Invalid message origin: '
                 f'{message_info.origin} (expected {self.url})')
         body = self._fetch_message_body(message_info.pupil_id, message_info.id)
+        timestamp = self._parse_sent_time(body)
         recipients = self._parse_recipients(body)
         message_content = self._parse_message_content(body)
         replies = self._parse_replies(body)
         message = Message.from_info_and_attrs(
-            message_info, recipients, message_content, replies)
+            message_info, timestamp, recipients, message_content, replies)
         return message
 
     def _fetch_message_body(
@@ -205,6 +206,15 @@ class Connection:
             raise Exception(f'Cannot parse message: {url}')
         replace_emoji_imgs(body)
         return body
+
+    def _parse_sent_time(self, body: Tag) -> datetime:
+        table_ths = body.select('table th')
+        sent_ths = [x for x in table_ths if x.text.startswith('Sent:')]
+        if len(sent_ths) == 1 and sent_ths[0].parent:
+            sent_td = sent_ths[0].parent.find('td')
+            if sent_td:
+                return _parse_timestamp(sent_td.text)
+        raise Exception(f'Cannot find table cell contaiting sending time')
 
     def _parse_recipients(self, body: Tag) -> List[Person]:
         recip_div = body.select_one('#recipients-cell')
