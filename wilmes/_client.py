@@ -2,7 +2,7 @@ import re
 import urllib.parse
 from datetime import datetime
 from types import TracebackType
-from typing import Dict, Iterable, List, Optional, Protocol, Type
+from typing import Dict, Iterable, List, Optional, Protocol, Tuple, Type
 
 import bs4
 import mechanicalsoup
@@ -269,26 +269,31 @@ class Connection:
             for a_elem in page.find_all('a', href=True)
             if a_elem and a_elem.get('class')
         )
-        news_map = {
-            int(match.group('news_id')): a_elem.text.strip()
+        news_map: Dict[int, Tuple[str, Optional[datetime]]] = {
+            # news_id -> (subject, date)
+            int(match.group('news_id')): (a_elem.text.strip(), None)
             for (a_elem, match) in link_matches
             if match
         }
         for well in page.select('.well'):
+            date_h2 = well.find_previous('h2')
+            date = _parse_timestamp(date_h2.text) if date_h2 else None
             title_elem = well.find('h3')
             a_elem = well.find('a', href=True)
             href = a_elem.get('href', '') if a_elem else ''
             match = NEWS_ITEM_LINK_RX.match(href)
             if title_elem and match:
-                news_map[int(match.group('news_id'))] = title_elem.text.strip()
+                subject = title_elem.text.strip()
+                news_map[int(match.group('news_id'))] = (subject, date)
         return [
             NewsItemInfo(
                 id=NewsItemId(news_id),
                 origin=self.url,
                 pupil_id=pupil_id,
                 subject=subject,
+                timestamp=timestamp,
             )
-            for (news_id, subject) in sorted(news_map.items())
+            for (news_id, (subject, timestamp)) in sorted(news_map.items())
         ]
 
     def fetch_news_item(self, news_item_info: NewsItemInfo) -> NewsItem:

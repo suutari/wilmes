@@ -74,6 +74,24 @@ class Tag(PageElement):
             **kwargs: _MatchAgainst,
     ) -> ResultSet['Tag']: ...
 
+    def find_next(
+            self,
+            name: Optional[str] = ...,
+            attrs: Mapping[str, _MatchAgainst] = ...,
+            text: Optional[str] = ...,
+            limit: Optional[int] = ...,
+            **kwargs: _MatchAgainst,
+    ) -> Optional['Tag']: ...
+
+    def find_previous(
+            self,
+            name: Optional[str] = ...,
+            attrs: Mapping[str, _MatchAgainst] = ...,
+            text: Optional[str] = ...,
+            limit: Optional[int] = ...,
+            **kwargs: _MatchAgainst,
+    ) -> Optional['Tag']: ...
+
     def select(
             self,
             selector: str,
