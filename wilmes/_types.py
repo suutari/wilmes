@@ -36,10 +36,10 @@ class MessageInfo:
 
     def __str__(self) -> str:
         return (
+            f'Message {self.id:6}: '
             f'{self.last_timestamp:%Y-%m-%d %H:%M} '
-            f'{self.sender.name:40} '
-            f'{"* " if self.is_unread else "  "}'
-            f'{self.subject}')
+            f'"{self.subject}"'
+            f'{f" (+{self.reply_count})" if self.reply_count else ""}')
 
 
 class _MessageWithBody:
