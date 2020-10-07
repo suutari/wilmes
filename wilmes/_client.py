@@ -1,8 +1,17 @@
 import re
 import urllib.parse
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from types import TracebackType
-from typing import Dict, Iterable, List, Optional, Protocol, Tuple, Type
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    Type,
+)
 
 import bs4
 import mechanicalsoup
@@ -33,6 +42,10 @@ PROFILE_HREF_RX = re.compile(r'.*/profiles/([^/]+)/(\d+)')
 NEWS_ITEM_LINK_RX = re.compile(r'/!(\d+)/news/(?P<news_id>\d+)$')
 REPLY_HEADER_RX = re.compile(
     r'(?P<from>.*)\xa0? replied [^0-9]*(?P<date>[0-9][0-9.:/ ]+)$')
+SPECIAL_DATES: Dict[str, Callable[[], date]] = {
+    'today': date.today,
+    'yesterday': lambda: date.today() - timedelta(days=1),
+}
 YEARLESS_DATE_RX = re.compile(
     r'^((0?[1-9])|[1-2][0-9]|3[01])\.((0?[1-9])|(1[0-2]))\.$')
 
@@ -400,7 +413,10 @@ class _PytzTimezone(Protocol):
 
 
 def _parse_timestamp(string: str, tz: _PytzTimezone = TZ) -> datetime:
-    if YEARLESS_DATE_RX.match(string):
+    special_date_function = SPECIAL_DATES.get(string.strip().lower())
+    if special_date_function:
+        string = str(special_date_function())
+    elif YEARLESS_DATE_RX.match(string):
         string += str(datetime.now().year)
     dt = parse_datetime(string, dayfirst=(string.count('.') >= 2))
     if dt.tzinfo:
