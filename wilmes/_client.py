@@ -81,7 +81,7 @@ class Connection:
         Log in to the site.
         """
         browser = mechanicalsoup.StatefulBrowser(raise_on_404=True)
-        browser.open(f'{url}/login')
+        browser.open(f'{url}/?langid={ENGLISH_LANG_ID}')
         browser.select_form('.login-form')
         browser['Login'] = username
         browser['Password'] = password
@@ -116,15 +116,24 @@ class Connection:
     ) -> None:
         self.url = url
         self.browser = browser
-        self._lang_is_set = False
         self.front_page = self._get_current_page_or_fail()
         links = self.front_page.find_all('a', href=True)
+        self._check_language(links)
         self.pupils = self._parse_pupils(links)
         self.new_message_counts = self._parse_new_message_counts(links)
         own_name_span = self.front_page.select_one('.name-container .teacher')
         if not own_name_span:
             raise Exception('Cannot find the span containing your name')
         self.own_name = own_name_span.text
+
+    def _check_language(self, links: Iterable[Tag]) -> None:
+        for a_elem in links:
+            if a_elem.get('href', '').endswith('passwd/settings'):
+                if a_elem.text == "Account settings":
+                    return
+                raise Exception(
+                    f"Invalid language: 'Account settings' is {a_elem.text!r}")
+        raise Exception("Cannot find element for checking language")
 
     def _parse_pupils(self, links: Iterable[Tag]) -> Dict[PupilId, Pupil]:
         """
@@ -393,10 +402,6 @@ class Connection:
             self,
             relative_url: str,
     ) -> requests.Response:
-        if not self._lang_is_set and not relative_url.startswith('/?langid='):
-            self._browse(f'/?langid={ENGLISH_LANG_ID}')
-            self._lang_is_set = True
-
         response = self.browser.open_relative(relative_url)
         response.raise_for_status()
         return response
