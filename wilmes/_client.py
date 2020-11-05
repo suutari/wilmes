@@ -369,7 +369,8 @@ class Connection:
         if profile_link:
             return self._parse_profile_link(profile_link)
         else:
-            return Person(element.text.strip())
+            text_lines = element.text.strip().splitlines() or ['']
+            return Person(text_lines[0].strip())
 
     def _parse_profile_link(self, profile_link: Tag) -> Person:
         profile_href = profile_link.get('href', '')
