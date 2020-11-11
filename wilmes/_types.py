@@ -121,6 +121,7 @@ class NewsItemInfo:
     pupil_id: PupilId
     subject: str
     timestamp: Optional[datetime]
+    is_unread: bool
 
     def __str__(self) -> str:
         date = self.timestamp.date() if self.timestamp else "????-??-??"
@@ -147,6 +148,7 @@ class NewsItem(_MessageWithBody, NewsItemInfo):
             origin=info.origin,
             pupil_id=info.pupil_id,
             subject=info.subject,
+            is_unread=info.is_unread,
             timestamp=timestamp,
             sender=sender,
             body=body,

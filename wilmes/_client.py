@@ -291,9 +291,9 @@ class Connection:
             for a_elem in page.find_all('a', href=True)
             if a_elem and a_elem.get('class')
         )
-        news_map: Dict[int, Tuple[str, Optional[datetime]]] = {
+        news_map: Dict[int, Tuple[str, Optional[datetime], bool]] = {
             # news_id -> (subject, date)
-            int(match.group('news_id')): (a_elem.text.strip(), None)
+            int(match.group('news_id')): (a_elem.text.strip(), None, False)
             for (a_elem, match) in link_matches
             if match
         }
@@ -305,8 +305,8 @@ class Connection:
             href = a_elem.get('href', '') if a_elem else ''
             match = NEWS_ITEM_LINK_RX.match(href)
             if title_elem and match:
-                subject = title_elem.text.strip()
-                news_map[int(match.group('news_id'))] = (subject, date)
+                (subject, is_new) = self._parse_news_title(title_elem)
+                news_map[int(match.group('news_id'))] = (subject, date, is_new)
         return [
             NewsItemInfo(
                 id=NewsItemId(news_id),
@@ -314,9 +314,20 @@ class Connection:
                 pupil_id=pupil_id,
                 subject=subject,
                 timestamp=timestamp,
+                is_unread=is_new,
             )
-            for (news_id, (subject, timestamp)) in sorted(news_map.items())
+            for (news_id, (subject, timestamp, is_new)) in sorted(
+                    news_map.items())
         ]
+
+    def _parse_news_title(self, title_elem: Tag) -> Tuple[str, bool]:
+        labels = set()
+        for label in title_elem.select("span.label"):
+            labels.add(label.text.lower())
+            label.replace_with('')
+        subject = title_elem.text.strip()
+        is_new = ('new' in labels)
+        return (subject, is_new)
 
     def fetch_news_item(self, news_item_info: NewsItemInfo) -> NewsItem:
         elem = self._fetch_news_item_body(
