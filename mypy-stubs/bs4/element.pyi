@@ -45,6 +45,8 @@ class Tag(PageElement):
     @overload
     def get(self, key: str, default: _T) -> Union[str, _T]: ...
 
+    def __setitem__(self, key: str, value: str) -> None: ...
+
     def get_text(
             self,
             separator: str = ...,

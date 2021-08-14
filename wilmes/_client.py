@@ -20,6 +20,7 @@ from bs4.element import Tag
 from dateutil.parser import parse as parse_datetime
 
 from ._bs_utils import stringify_contents
+from ._email_unmangling import unmangle_emails
 from ._emojis import replace_emoji_imgs
 from ._settings import TZ
 from ._types import (
@@ -227,6 +228,7 @@ class Connection:
         if not body:
             raise Exception(f'Cannot parse message: {url}')
         replace_emoji_imgs(body)
+        unmangle_emails(body)
         return body
 
     def _parse_sent_time(self, body: Tag) -> datetime:
@@ -364,6 +366,7 @@ class Connection:
         if not body:
             raise Exception(f'Cannot parse news item: {url}')
         replace_emoji_imgs(body)
+        unmangle_emails(body)
         return body
 
     def _parse_news_item_sender(self, metadata: Tag) -> Person:
