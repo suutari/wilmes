@@ -23,12 +23,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     # types
-    "mypy~=0.740.0",
+    "mypy",
 
     # style
-    "flake8~=3.7",
-    "flake8-isort~=2.7",
-    "pep8-naming~=0.9.1",
+    "flake8",
+    "flake8-isort",
+    "pep8-naming",
 
     # util
     "ipython",
