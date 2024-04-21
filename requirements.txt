@@ -9,9 +9,9 @@ beautifulsoup4==4.8.1 \
     --hash=sha256:6135db2ba678168c07950f9a16c4031822c6f4aec75a65e0a97bc5ca09789931 \
     --hash=sha256:dcdef580e18a76d54002088602eba453eec38ebbcafafeaabd8cab12b6155d57
     # via mechanicalsoup
-certifi==2019.11.28 \
-    --hash=sha256:017c25db2a153ce562900032d5bc68e9f191e44e9a0f762f373977de9df1fbb3 \
-    --hash=sha256:25b64c7da4cd7479594d035c08c2d809eb4aab3a26e5a990ea98cc450c320f1f
+certifi==2023.7.22 \
+    --hash=sha256:539cc1d13202e33ca466e88b2807e29f4c13049d6d87031a3c110744495cb082 \
+    --hash=sha256:92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9
     # via requests
 chardet==3.0.4 \
     --hash=sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae \
