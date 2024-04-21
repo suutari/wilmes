@@ -1,6 +1,6 @@
 [project]
 name = "wilmes"
-version = "0.11.0"
+version = "0.11.1"
 description = "Message fetching library for a Finnish school site"
 readme = "README.rst"
 authors = [{name="Tuomas Suutari", email="tuomas@nepnep.net"}]
