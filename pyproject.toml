@@ -24,6 +24,9 @@ dependencies = [
 dev = [
     # types
     "mypy",
+    "types-pytz",
+    "types-requests",
+    "types-python-dateutil",
 
     # style
     "flake8",
