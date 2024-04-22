@@ -3,7 +3,6 @@ from typing import Any, Mapping, Optional
 import bs4
 import requests
 
-
 class _Response(requests.Response):
     @property
     def soup(self) -> Optional[bs4.BeautifulSoup]: ...

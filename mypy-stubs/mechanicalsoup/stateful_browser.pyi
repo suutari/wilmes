@@ -5,7 +5,6 @@ import bs4
 from .browser import Browser, _Response
 from .form import Form
 
-
 class StatefulBrowser(Browser):
     def absolute_url(self, url: str) -> str: ...
 
