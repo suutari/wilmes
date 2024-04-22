@@ -48,3 +48,24 @@ wilmes = "wilmes.__main__:main"
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.mypy]
+mypy_path = "mypy-stubs:../mypy-stubs"
+files = "."
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+no_implicit_reexport = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
