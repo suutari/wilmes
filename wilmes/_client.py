@@ -84,11 +84,13 @@ class Connection:
         browser = mechanicalsoup.StatefulBrowser(raise_on_404=True)
         browser.open(f'{url}/token')
         browser.open(f'{url}/?langid={ENGLISH_LANG_ID}')
-        cookies = browser.get_cookiejar().get_dict()
         browser.select_form('.login-form')
         browser['Login'] = username
         browser['Password'] = password
-        browser['SESSIONID'] = cookies['Wilma2LoginID']
+        session_id = browser.get_cookiejar().get('Wilma2LoginID')
+        if session_id is None:
+            raise Exception('Cannot find Wilma2LoginID cookie for SESSIONID')
+        browser['SESSIONID'] = session_id
         response = browser.submit_selected()
         response.raise_for_status()
         parsed_url = urllib.parse.urlparse(response.url)
