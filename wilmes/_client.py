@@ -243,7 +243,7 @@ class Connection:
             sent_td = sent_ths[0].parent.find('td')
             if sent_td:
                 return _parse_timestamp(sent_td.text)
-        raise Exception(f'Cannot find table cell contaiting sending time')
+        raise Exception('Cannot find table cell contaiting sending time')
 
     def _parse_recipients(self, body: Tag) -> List[Person]:
         recip_div = body.select_one('#recipients-cell')
